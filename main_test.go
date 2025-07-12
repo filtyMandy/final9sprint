@@ -1,70 +1,71 @@
 package main
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func TestGenerateRandomElements(t *testing.T) {
-	//empty slice
-	arr := generateRandomElements(0)
-	if arr == nil {
-		t.Error("nil array")
-	}
-	if len(arr) != 0 {
-		t.Errorf("expected length 0, got %d", len(arr))
-	}
-
-	//negative size
-	arr = generateRandomElements(-111)
-	if len(arr) != 0 {
-		t.Errorf("expected length 0 for negative size, got %d", len(arr))
+	tests := []struct {
+		name    string
+		size    int
+		wantLen int
+	}{
+		{"Zero size", 0, 0},
+		{"Negative size", -5, 0},
+		{"Normal size", 30, 30},
 	}
 
-	//casual size
-	size := 100
-	arr = generateRandomElements(size)
-	if len(arr) != size {
-		t.Errorf("expected length %d, got %d", size, len(arr))
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			arr := generateRandomElements(tc.size)
+			assert.NotNil(t, arr)
+			assert.Equal(t, tc.wantLen, len(arr))
+			for _, v := range arr {
+				assert.GreaterOrEqual(t, v, 1)
+			}
+		})
 	}
-	for i, v := range arr {
-		if v < 1 || v > 1_000_000 {
-			t.Errorf("element %d out of bounds: got %d", i, v)
-		}
-	}
+
 }
 
 func TestMaximum(t *testing.T) {
-	//empty slice
-	_, err := maximum([]int{})
-	if err == nil {
-		t.Error("expected error for empty data")
+	tests := []struct {
+		name  string
+		slice []int
+		want  int
+	}{
+		{"Empty slice", []int{}, 0},
+		{"One element", []int{42}, 42},
+		{"All equal", []int{5, 5, 5, 5}, 5},
+		{"Max in middle", []int{2, 9, 7, 5}, 9},
+		{"Max negative", []int{-5, -3, -8, -1}, -1},
 	}
 
-	//one element
-	v, err := maximum([]int{123})
-	if err != nil {
-		t.Errorf("did not expect error for one element: %v", err)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := maximum(tc.slice)
+			assert.Equal(t, tc.want, got)
+		})
 	}
-	if v != 123 {
-		t.Errorf("expected 42, got %d", v)
+}
+
+func TestMaxChunks(t *testing.T) {
+	tests := []struct {
+		name  string
+		slice []int
+		want  int
+	}{
+		{"Empty", []int{}, 0},
+		{"Short", []int{1, 99, 3}, 99},
+		{"One", []int{7}, 7},
+		{"Chunked", []int{1, 5, 11, 4, 3, 99, 8, 33, 4, 2, 70, 50, 20, 19, 14, 88}, 99},
 	}
 
-	//few elements
-	v, err = maximum([]int{1, 2, 13, 4, 5})
-	if err != nil {
-		t.Errorf("did not expect error: %v", err)
-	}
-	if v != 13 {
-		t.Errorf("expected 13, got %d", v)
-	}
-
-	//max is first element
-	v, err = maximum([]int{1000, 2, 3, 4, 5})
-	if v != 1000 {
-		t.Errorf("expected 1000, got %d", v)
-	}
-
-	//max is in the end
-	v, err = maximum([]int{1, 2, 3, 4, 500})
-	if v != 500 {
-		t.Errorf("expected 500, got %d", v)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := maxChunks(tc.slice)
+			assert.Equal(t, tc.want, got)
+		})
 	}
 }

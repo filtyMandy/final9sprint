@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -21,16 +20,16 @@ func generateRandomElements(size int) []int {
 	}
 	data := make([]int, size)
 	for i := range data {
-		data[i] = rand.Intn(1_000_000) + 1
+		data[i] = rand.Int() + 1
 	}
 	return data
 }
 
 // maximum returns the maximum number of elements.
-func maximum(data []int) (int, error) {
+func maximum(data []int) int {
 	// ваш код здесь
 	if len(data) == 0 {
-		return 0, errors.New("data is empty")
+		return 0
 	}
 	max := data[0]
 	for _, v := range data[1:] {
@@ -38,21 +37,19 @@ func maximum(data []int) (int, error) {
 			max = v
 		}
 	}
-	return max, nil
+	return max
 }
 
 // maxChunks returns the maximum number of elements in a chunks.
-func maxChunks(data []int) (int, error) {
+func maxChunks(data []int) int {
 	// ваш код здесь
 	if len(data) == 0 {
-		return 0, errors.New("data is empty")
+		return 0
 	}
-
 	chunkSize := len(data) / CHUNKS
 	if chunkSize == 0 {
 		return maximum(data)
 	}
-
 	maxs := make([]int, CHUNKS)
 	wg := sync.WaitGroup{}
 	for i := 0; i < CHUNKS; i++ {
@@ -61,21 +58,12 @@ func maxChunks(data []int) (int, error) {
 		if i == CHUNKS-1 {
 			end = len(data)
 		}
+		chunk := data[start:end]
 		wg.Add(1)
-		go func(idx, a, b int) {
+		go func(idx int, chunk []int) {
 			defer wg.Done()
-			if a >= b {
-				maxs[idx] = 0
-				return
-			}
-			max := data[a]
-			for _, v := range data[a+1 : b] {
-				if v > max {
-					max = v
-				}
-			}
-			maxs[idx] = max
-		}(i, start, end)
+			maxs[idx] = maximum(chunk)
+		}(i, chunk)
 	}
 	wg.Wait()
 	return maximum(maxs)
@@ -90,22 +78,15 @@ func main() {
 	fmt.Println("Ищем максимальное значение в один поток")
 	// ваш код здесь
 	t1 := time.Now()
-	max, err := maximum(data)
+	max := maximum(data)
 	elapsed := time.Since(t1).Microseconds()
-	if err != nil {
-		fmt.Println("Error: ", err.Error())
-	}
 
 	fmt.Printf("Максимальное значение элемента: %d\nВремя поиска: %d ms\n", max, elapsed)
 
 	fmt.Printf("Ищем максимальное значение в %d потоков\n", CHUNKS)
 	// ваш код здесь
 	t2 := time.Now()
-	max, err = maxChunks(data)
+	max = maxChunks(data)
 	elapsed = time.Since(t2).Microseconds()
-	if err != nil {
-		fmt.Println("Error: ", err.Error())
-	}
-
 	fmt.Printf("Максимальное значение элемента: %d\nВремя поиска: %d ms\n", max, elapsed)
 }
